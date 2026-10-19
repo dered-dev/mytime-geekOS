@@ -2,6 +2,16 @@
 
 Carga horas en [Geek OS](https://gvia.io) desde Cursor, con tu propia cuenta. Ves y registras solo lo que tu rol ya puede hacer en la app.
 
+## Qué necesitas y de dónde sale
+
+Hace falta una sola vía. El MCP no pide correo ni contraseña. El script no pide token.
+
+| Vía | Qué pones | Dónde lo sacas |
+| --- | --- | --- |
+| MCP en Cursor, Claude Code o Codex | Un token personal, en la variable `GEEK_OS_TOKEN` | Entras a [gvia.io](https://gvia.io) con tu usuario de siempre. Abres **Mi cuenta → Agentes y MCP**, o directo [gvia.io/me/integrations](https://gvia.io/me/integrations). **Nuevo token**, le pones el nombre de la herramienta (`Cursor`, `Claude Code` o `Codex`) y lo copias. Se muestra una sola vez. Si lo pierdes, revocas ese y creas otro. |
+| MCP en Claude (claude.ai, Desktop o móvil) | Nada que copiar | **Configuración → Conectores → Agregar conector personalizado**. Nombre `Geek OS`, URL `https://gvia.io/api/mcp`. Al conectar, Geek OS te pide tu correo y contraseña de siempre y autorizas. |
+| Script de este repo | `USER` y `PASSWORD` en un archivo `.env` | No se generan. Son el correo y la contraseña con los que entras a [gvia.io](https://gvia.io). |
+
 Le dices al agente el proyecto, la tarea, a qué hora empezaste, a qué hora terminaste (o cuántas horas) y qué hiciste. Si no dices el día, usa hoy en Ciudad de México.
 
 > Hoy, de las 11:00 a las 12:30, en Solfium, tarea Integración de frontend a WP. Logo issue mobile iOS.
