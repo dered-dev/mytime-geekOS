@@ -10,7 +10,7 @@ Hace falta una sola vía. El MCP no pide correo ni contraseña. El script no pid
 | --- | --- | --- |
 | MCP en Cursor, Claude Code o Codex | Un token personal, en la variable `GEEK_OS_TOKEN` | Entras a [gvia.io](https://gvia.io) con tu usuario de siempre. Abres **Mi cuenta → Agentes y MCP**, o directo [gvia.io/me/integrations](https://gvia.io/me/integrations). **Nuevo token**, le pones el nombre de la herramienta (`Cursor`, `Claude Code` o `Codex`) y lo copias. Se muestra una sola vez. Si lo pierdes, revocas ese y creas otro. |
 | MCP en Claude (claude.ai, Desktop o móvil) | Nada que copiar | **Configuración → Conectores → Agregar conector personalizado**. Nombre `Geek OS`, URL `https://gvia.io/api/mcp`. Al conectar, Geek OS te pide tu correo y contraseña de siempre y autorizas. |
-| Script de este repo | `USER` y `PASSWORD` en un archivo `.env` | No se generan. Son el correo y la contraseña con los que entras a [gvia.io](https://gvia.io). |
+| Script de este repo | `USER` y `PASSWORD` en un `.env` | No se generan. Copia [`.env.example`](.env.example) a `.env` y reemplaza `REEMPLAZA_CON_TU_CORREO` y `REEMPLAZA_CON_TU_CONTRASEÑA` por el correo y la contraseña con los que entras a [gvia.io](https://gvia.io). |
 
 Le dices al agente el proyecto, la tarea, a qué hora empezaste, a qué hora terminaste (o cuántas horas) y qué hiciste. Si no dices el día, usa hoy en Ciudad de México.
 
@@ -70,11 +70,11 @@ Hace falta Node 22. No instala dependencias. Entra con tu correo y contraseña, 
 cp .env.example .env
 ```
 
-Edita `.env`:
+El `.env` queda así. Cambia solo los dos placeholders:
 
 ```
-USER=tu@correo.com
-PASSWORD=tu-contraseña
+USER=REEMPLAZA_CON_TU_CORREO
+PASSWORD=REEMPLAZA_CON_TU_CONTRASEÑA
 ```
 
 `.env` está en `.gitignore`. No lo subas.
