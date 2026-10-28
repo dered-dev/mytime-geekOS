@@ -94,9 +94,11 @@ node scripts/subir-horas.mjs \
 node scripts/subir-horas.mjs --hoy
 node scripts/subir-horas.mjs --ayer
 node scripts/subir-horas.mjs --faltan
+node scripts/subir-horas.mjs --proyectos
+node scripts/subir-horas.mjs --tareas --proyecto Roshfrans
 ```
 
-`--faltan` lista lunes a viernes de la semana y marca los días sin horas. Si el texto de la tarea coincide con varias, el script se detiene y las imprime. Elige una y vuelve a correrlo.
+`--faltan` lista lunes a viernes de la semana y marca los días sin horas. `--proyectos` lista los proyectos donde tienes tareas y `--tareas --proyecto X` las tareas de uno. Si el texto de la tarea coincide con varias, el script se detiene y las imprime. Elige una y vuelve a correrlo. Si no encuentra el proyecto, lista los que ves. Si no encuentra la tarea, lista las parecidas y todas las del proyecto, y te da tres caminos: usar una existente, crear una subtarea o crear una tarea nueva (las dos últimas desde la app o con el MCP).
 
 ## Reglas de Geek OS
 
@@ -106,7 +108,8 @@ Son las de la app. Ni el MCP ni el script las saltan.
 - Máximo 12 horas por entrada. Si fue más, hay que partirla.
 - Se puede registrar hasta 14 días hacia atrás. Nada a futuro.
 - Si la tarea tiene subtareas, el tiempo va en una subtarea, no en el padre.
-- Con un timer corriendo, el MCP no deja registrar. Páralo primero.
+- Con un timer corriendo, el MCP no deja registrar. El agente te pide permiso para pararlo, registra, y luego te pregunta si lo reanuda en la misma tarea o lo deja parado.
+- Pasar una tarea a En progreso arranca el timer si eres el assignee.
 - Si el horario se empalma con otra entrada, igual se guarda y el agente avisa con cuál chocó.
 
 El detalle para el agente está en `.cursor/skills/subir-horas/SKILL.md`.
