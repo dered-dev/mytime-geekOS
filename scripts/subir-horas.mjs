@@ -8,6 +8,8 @@
 //   node scripts/subir-horas.mjs --hoy                          # listado de hoy
 //   node scripts/subir-horas.mjs --ayer                         # listado de ayer
 //   Si el horario se empalma con otra entrada, igual la guarda y avisa al final.
+//   node scripts/subir-horas.mjs --proyectos                    # proyectos que ves (según tus tareas)
+//   node scripts/subir-horas.mjs --tareas --proyecto Roshfrans  # tareas de un proyecto
 //   node scripts/subir-horas.mjs --dry-run ...                  # resuelve la tarea y no guarda
 //   node scripts/subir-horas.mjs --self-check                   # prueba local, sin red
 
@@ -156,27 +158,73 @@ function projectHay(task) {
     .join(" ");
 }
 
+function projectList(tasks) {
+  const byName = new Map();
+  for (const t of tasks) {
+    const name = t.project?.name;
+    if (!name) continue;
+    const client = t.project?.client?.nombre || t.project?.proposal?.clientName || "";
+    const row = byName.get(name) ?? { name, client, tasks: 0 };
+    row.tasks += 1;
+    byName.set(name, row);
+  }
+  return [...byName.values()].sort((a, b) => a.name.localeCompare(b.name, "es"));
+}
+
+function fmtProjects(tasks) {
+  return projectList(tasks)
+    .map((p, i) => `${i + 1}. ${p.name}${p.client ? `  (${p.client})` : ""}  · ${p.tasks} tareas`)
+    .join("\n");
+}
+
+function fmtTasks(tasks) {
+  return tasks
+    .map((t, i) => {
+      const sub = t.parentId || t.parent ? "  [subtarea]" : "";
+      const status = t.status ? `  · ${t.status}` : "";
+      return `${i + 1}. ${t.title}${sub}${status}  [${t.project?.name ?? ""}]`;
+    })
+    .join("\n");
+}
+
+const CAMINOS = [
+  "Opciones:",
+  "  1. Registrar en una de las tareas de arriba: vuelve a correr con --tarea \"<título>\".",
+  "  2. Crear una subtarea con ese nombre bajo la tarea padre que corresponda.",
+  "  3. Crear una tarea nueva en el proyecto.",
+  "Las opciones 2 y 3 se hacen desde la app (gvia.io) o con el MCP de Geek OS; el script no crea tareas.",
+].join("\n");
+
+function wordsHit(title, tq) {
+  const words = tq.split(" ").filter((w) => w.length > 2);
+  const t = norm(title);
+  return words.length > 0 && words.some((w) => t.includes(w));
+}
+
 function pick(tasks, proyecto, tarea) {
   const pq = norm(proyecto);
   const tq = norm(tarea);
   const inProject = tasks.filter((t) => norm(projectHay(t)).includes(pq));
   if (inProject.length === 0) {
-    const names = [...new Set(tasks.map((t) => t.project?.name).filter(Boolean))].sort();
-    die(`Ningún proyecto coincide con "${proyecto}".\n${names.join("\n")}`, 2);
+    die(
+      `Ningún proyecto coincide con "${proyecto}". Estos son los proyectos que ves (según tus tareas). Elige uno y vuelve a correr con --proyecto:\n${fmtProjects(tasks)}`,
+      2,
+    );
   }
+  const projects = projectList(inProject);
   const hits = inProject.filter((t) => norm(t.title).includes(tq));
   const exact = hits.filter((t) => norm(t.title) === tq);
   if (exact.length === 1) return exact[0];
   if (hits.length === 1) return hits[0];
-  const list = (hits.length ? hits : inProject)
-    .map((t) => `- ${t.title}  [${t.project.name}]`)
-    .join("\n");
-  die(
-    hits.length === 0
-      ? `Ninguna tarea de "${proyecto}" coincide con "${tarea}".\n${list}`
-      : `Hay ${hits.length} tareas que coinciden. Sé más específico:\n${list}`,
-    2,
-  );
+  if (hits.length > 1) {
+    die(`Hay ${hits.length} tareas que coinciden. Sé más específico:\n${fmtTasks(hits)}`, 2);
+  }
+  const near = inProject.filter((t) => wordsHit(t.title, tq));
+  const head = projects.length > 1
+    ? `"${proyecto}" coincide con ${projects.length} proyectos.`
+    : `En "${projects[0].name}" no hay ninguna tarea que se llame "${tarea}".`;
+  const parecidas = near.length ? `\nParecidas:\n${fmtTasks(near)}\n` : "";
+  die(`${head}${parecidas}\nTodas las tareas:\n${fmtTasks(inProject)}\n\n${CAMINOS}`, 2);
 }
 
 class Jar {
@@ -297,6 +345,24 @@ function selfCheck() {
     ambiguous = true;
   }
   if (!ambiguous) die("self-check: dos tareas con 'front' debieron frenar");
+  let sinTarea = "";
+  try {
+    pick(tasks, "solfium", "analisis de rendimiento");
+  } catch (e) {
+    sinTarea = e.message;
+  }
+  if (!sinTarea.includes("Todas las tareas") || !sinTarea.includes("Desarrollo Front-End") || !sinTarea.includes("Crear una subtarea")) {
+    die(`self-check: sin tarea debió listar todas y dar opciones\n${sinTarea}`);
+  }
+  let sinProyecto = "";
+  try {
+    pick(tasks, "roshfrans", "lo que sea");
+  } catch (e) {
+    sinProyecto = e.message;
+  }
+  if (!sinProyecto.includes("Holcim sitio") || !sinProyecto.includes("Rediseño Web + SEO Solfium")) {
+    die(`self-check: sin proyecto debió listar los proyectos\n${sinProyecto}`);
+  }
   const named = pick(
     [
       { id: "a", title: "Landing laboratorio", project: { name: "Roshfrans" } },
@@ -346,6 +412,22 @@ async function main() {
   const { email, password } = loadEnv();
   const jar = new Jar();
   await login(jar, email, password);
+
+  if (flag("proyectos")) {
+    console.log(fmtProjects(await tasksOf(jar)));
+    return;
+  }
+
+  if (flag("tareas")) {
+    const proyecto = arg("proyecto");
+    if (!proyecto) die("Pasa --proyecto con --tareas");
+    const pq = norm(proyecto);
+    const all = await tasksOf(jar);
+    const list = all.filter((t) => norm(projectHay(t)).includes(pq));
+    if (list.length === 0) die(`Ningún proyecto coincide con "${proyecto}":\n${fmtProjects(all)}`, 2);
+    console.log(fmtTasks(list));
+    return;
+  }
 
   if (flag("faltan")) {
     const monday = mondayOf(arg("fecha") || todayMexico());
